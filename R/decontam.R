@@ -115,6 +115,23 @@ setMethod("isContaminant", signature = c(seqtab = "ANY"),
                     normalize = normalize,
                     detailed = detailed)
     }
+    if(is(seqtab, "MicrobiomeData")) {
+      obj <- seqtab
+      seqtab <- t(getAbs(obj))
+      if(is.character(conc) && length(conc)==1) conc <- sampleData(obj, conc)
+      if(is.character(neg) && length(neg)==1) neg <- sampleData(obj, neg)
+      if(is.character(batch) && length(batch)==1) batch <- sampleData(obj, batch)
+
+      return(.is_contaminant(seqtab,
+                             conc = conc,
+                             neg = neg,
+                             method = method,
+                             batch = batch,
+                             batch.combine = batch.combine,
+                             threshold = threshold,
+                             normalize = normalize,
+                             detailed = detailed))
+    }
     .is_contaminant(seqtab,
                     conc = conc,
                     neg = neg,
@@ -154,7 +171,7 @@ setMethod("isContaminant", signature = c(seqtab = "ANY"),
     else method <- "combined"
   }
   do.freq <- FALSE; do.prev <- FALSE; p.freq <- NA; p.prev <- NA
-  if(method %in% c("frequency", "minimum", "combined", "minimum", "either", "both")) do.freq <- TRUE
+  if(method %in% c("frequency", "minimum", "combined", "either", "both")) do.freq <- TRUE
   if(method %in% c("prevalence", "combined", "minimum", "either", "both")) do.prev <- TRUE
   if(do.prev) {
     if(is.null(neg)) stop("neg must be provided to perform prevalence-based contaminant identification.")
