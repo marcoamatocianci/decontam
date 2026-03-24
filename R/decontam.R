@@ -3,7 +3,7 @@
 #' The frequency of each sequence (or OTU) in the input feature table as a function of the concentration of
 #' amplified DNA in each sample is used to identify contaminant sequences.
 #'
-#' @param seqtab (Required). \code{matrix}, \code{phyloseq}, or \code{MicrobeData} object.
+#' @param seqtab (Required). \code{matrix}, \code{phyloseq}, or \code{MicrobiomeData} object.
 #' A feature table recording the observed abundances of each sequence variant (or OTU) in each sample.
 #' Rows should correspond to samples, and columns to sequences (or OTUs).
 #' If a phyloseq object is provided, the otu-table component will be extracted.
@@ -138,7 +138,7 @@ setMethod("isContaminant", signature = c(seqtab = "phyloseq"),
     }
 )
 
-setMethod("isContaminant", signature = c(seqtab = "MicrobeData"),
+setMethod("isContaminant", signature = c(seqtab = "MicrobiomeData"),
   function(seqtab,
            conc = NULL,
            neg = NULL,
