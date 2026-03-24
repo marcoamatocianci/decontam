@@ -149,44 +149,40 @@ setMethod("isContaminant", signature = c(seqtab = "MicrobiomeData"),
            normalize = TRUE,
            detailed = TRUE){
       obj <- seqtab
-      sam <- sampleNames(obj)
+      samples <- obj@colData
       seqtab <- t(getAbs(obj))   # rows = samples, cols = features
-    ## check sample identities
-    if (is.null(rownames(seqtab))) {
-      stop("seqtab must have rownames corresponding to sample IDs.")
-    }
-    if (is.null(rownames(sam))) {
-      stop("sampleData(obj) must have rownames corresponding to sample IDs.")
-    }
+      if (is.null(rownames(seqtab))) {
+       stop("seqtab must have rownames corresponding to sample IDs.")
+       }
+      if (is.null(rownames(samples))) {
+       stop("sampleData(obj) must have rownames corresponding to sample IDs.")
+       }
+      if (!setequal(rownames(seqtab), rownames(samples))) {
+       stop("Sample IDs in abundance table and sample metadata do not match.")
+       }
+    
+      samples <- samples[rownames(seqtab), , drop = FALSE]
 
-    ## same samples?
-    if (!setequal(rownames(seqtab), rownames(sam))) {
-      stop("Sample IDs in abundance table and sample metadata do not match.")
-    }
-
-    ## reorder metadata to match seqtab rows
-    sam <- sam[rownames(seqtab), , drop = FALSE]
-
-    if (is.character(conc) && length(conc) == 1) {
-      if (!(conc %in% colnames(sam))) {
-        stop(conc, " is not a valid sample variable.")
+      if (is.character(conc) && length(conc) == 1) {
+       if (!(conc %in% colnames(samples))) {
+         stop(conc, " is not a valid sample variable.")
+       }
+       conc <- samples[[conc]]
       }
-      conc <- sam[[conc]]
-    }
 
-    if (is.character(neg) && length(neg) == 1) {
-      if (!(neg %in% colnames(sam))) {
+     if (is.character(neg) && length(neg) == 1) {
+      if (!(neg %in% colnames(samples))) {
         stop(neg, " is not a valid sample variable.")
       }
-      neg <- sam[[neg]]
-    }
+      neg <- samples[[neg]]
+     }
 
-    if (is.character(batch) && length(batch) == 1) {
+     if (is.character(batch) && length(batch) == 1) {
       if (!(batch %in% colnames(sam))) {
         stop(batch, " is not a valid sample variable.")
       }
-      batch <- sam[[batch]]
-    }
+      batch <- samples[[batch]]
+     }
 
       .is_contaminant(seqtab,
                     conc = conc,
