@@ -88,7 +88,7 @@ setGeneric("isContaminant", signature = c("seqtab"),
 
 #' @rdname isContaminant
 #' @export
-setMethod("isContaminant", signature = c(seqtab = "ANY"),
+setMethod("isContaminant", signature = c(seqtab = "matrix"),
   function(seqtab,
            conc = NULL,
            neg = NULL,
@@ -98,24 +98,7 @@ setMethod("isContaminant", signature = c(seqtab = "ANY"),
            threshold = 0.1,
            normalize = TRUE,
            detailed = TRUE){
-    if(is(seqtab, "phyloseq")) {
-      ps <- seqtab
-      seqtab <- as(ps@otu_table, "matrix")
-      if(ps@otu_table@taxa_are_rows) { seqtab <- t(seqtab) }
-      if(is.character(conc) && length(conc)==1) { conc <- getFromPS(ps, conc) }
-      if(is.character(neg) && length(neg)==1) { neg <- getFromPS(ps, neg) }
-      if(is.character(batch) && length(batch)==1) { batch <- getFromPS(ps, batch) }
-      isContaminant(seqtab,
-                    conc = conc,
-                    neg = neg,
-                    method = method,
-                    batch = batch,
-                    batch.combine = batch.combine,
-                    threshold = threshold,
-                    normalize = normalize,
-                    detailed = detailed)
-    }
-    .is_contaminant(seqtab,
+  .is_contaminant(seqtab,
                     conc = conc,
                     neg = neg,
                     method = method,
@@ -125,8 +108,67 @@ setMethod("isContaminant", signature = c(seqtab = "ANY"),
                     normalize = normalize,
                     detailed = detailed)
   }
+          
+setMethod("isContaminant", signature = c(seqtab = "phyloseq"),
+  function(seqtab,
+           conc = NULL,
+           neg = NULL,
+           method = c("auto", "frequency", "prevalence", "combined", "minimum", "either", "both"),
+           batch = NULL,
+           batch.combine = c("minimum", "product", "fisher"),
+           threshold = 0.1,
+           normalize = TRUE,
+           detailed = TRUE){
+      ps <- seqtab
+      seqtab <- as(ps@otu_table, "matrix")
+      if(ps@otu_table@taxa_are_rows) { seqtab <- t(seqtab) }
+      if(is.character(conc) && length(conc)==1) { conc <- getFromPS(ps, conc) }
+      if(is.character(neg) && length(neg)==1) { neg <- getFromPS(ps, neg) }
+      if(is.character(batch) && length(batch)==1) { batch <- getFromPS(ps, batch) }
+      .is_contaminant(seqtab,
+                    conc = conc,
+                    neg = neg,
+                    method = method,
+                    batch = batch,
+                    batch.combine = batch.combine,
+                    threshold = threshold,
+                    normalize = normalize,
+                    detailed = detailed)
+    }
 )
 
+setMethod("isContaminant", signature = c(seqtab = "MicrobeData"),
+  function(seqtab,
+           conc = NULL,
+           neg = NULL,
+           method = c("auto", "frequency", "prevalence", "combined", "minimum", "either", "both"),
+           batch = NULL,
+           batch.combine = c("minimum", "product", "fisher"),
+           threshold = 0.1,
+           normalize = TRUE,
+           detailed = TRUE){
+      obj <- seqtab  # rows = samples, cols = features
+      samples <- sampleNames(obj)
+      seqtab <- t(getAbs(obj))
+      if (!setequal(rownames(seqtab), samples)) {
+           stop("Sample IDs in abundance table and sample metadata do not match.")
+      }
+      if(is.character(conc) && length(conc)==1) { conc <- sampleData(obj, conc) }
+      if(is.character(neg) && length(neg)==1) { neg <- sampleData(obj, neg) }
+      if(is.character(batch) && length(batch)==1) { batch <- sampleData(obj, batch) }
+      .is_contaminant(seqtab,
+                    conc = conc,
+                    neg = neg,
+                    method = method,
+                    batch = batch,
+                    batch.combine = batch.combine,
+                    threshold = threshold,
+                    normalize = normalize,
+                    detailed = detailed)
+    }
+)
+
+          
 .is_contaminant <- function(seqtab,
                             conc = NULL,
                             neg = NULL,
@@ -154,7 +196,7 @@ setMethod("isContaminant", signature = c(seqtab = "ANY"),
     else method <- "combined"
   }
   do.freq <- FALSE; do.prev <- FALSE; p.freq <- NA; p.prev <- NA
-  if(method %in% c("frequency", "minimum", "combined", "minimum", "either", "both")) do.freq <- TRUE
+  if(method %in% c("frequency", "minimum", "combined", "either", "both")) do.freq <- TRUE
   if(method %in% c("prevalence", "combined", "minimum", "either", "both")) do.prev <- TRUE
   if(do.prev) {
     if(is.null(neg)) stop("neg must be provided to perform prevalence-based contaminant identification.")
