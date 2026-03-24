@@ -148,9 +148,9 @@ setMethod("isContaminant", signature = c(seqtab = "MicrobiomeData"),
            threshold = 0.1,
            normalize = TRUE,
            detailed = TRUE){
-      obj <- seqtab  # rows = samples, cols = features
+      obj <- seqtab
       samples <- sampleNames(obj)
-      seqtab <- t(getAbs(obj))
+      seqtab <- t(getAbs(obj))   # rows = samples, cols = features
       if (!setequal(rownames(seqtab), samples)) {
            stop("Sample IDs in abundance table and sample metadata do not match.")
       }
